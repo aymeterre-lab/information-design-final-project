@@ -1,0 +1,10 @@
+.DS_Store
+*.pdf
+*.csv
+_debug*.png
+_test*.png
+ia-*.html
+userflow.html
+visual-design-ppt.html
+easytask-*.html
+build_ia_screens_pdf.py

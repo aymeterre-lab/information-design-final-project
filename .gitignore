@@ -8,3 +8,20 @@ userflow.html
 visual-design-ppt.html
 easytask-*.html
 build_ia_screens_pdf.py
+
+# IA·? ???? ????·?? (?? ? ???)
+*Sitemap*
+*Userflow*
+assets/ia-soomgo*
+assets/easytask*
+assets/legacy-*
+assets/chat-av-*
+assets/core-tasks*
+assets/mascot-*
+assets/positioning-matrix*
+assets/splash-mascot*
+assets/waiting-mascot*
+assets/pet-deco/screen_*
+assets/pet-deco/pet_*.png
+assets/pet-deco/preview_cat.png
+assets/pet-deco/pet_preview_fixed.png

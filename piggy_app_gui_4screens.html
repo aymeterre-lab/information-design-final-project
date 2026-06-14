@@ -5025,6 +5025,52 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 })();
 
+window.PetDecoStore = (() => {
+  const STORAGE_KEY = "pocketMatePetDeco";
+  const PREVIEW_BASE = "./assets/pet-deco/previews";
+  const PREVIEW_VER = "4";
+
+  const loadAll = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  };
+
+  const saveAll = (data) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  };
+
+  const buildPreviewSrc = (petKey, p, h, c) =>
+    `${PREVIEW_BASE}/${petKey}/${petKey}_p${p}_h${h}_c${c}_i0.png?v=${PREVIEW_VER}`;
+
+  const get = (petKey) => loadAll()[petKey] || null;
+
+  const set = (petKey, { p, h, c, previewSrc }) => {
+    const all = loadAll();
+    all[petKey] = {
+      p,
+      h,
+      c,
+      previewSrc: previewSrc || buildPreviewSrc(petKey, p, h, c),
+    };
+    saveAll(all);
+    window.dispatchEvent(new CustomEvent("petdeco:saved", { detail: { petKey, ...all[petKey] } }));
+  };
+
+  const clear = (petKey) => {
+    const all = loadAll();
+    delete all[petKey];
+    saveAll(all);
+    window.dispatchEvent(new CustomEvent("petdeco:cleared", { detail: { petKey } }));
+  };
+
+  const getHomeImage = (petKey, fallback) => get(petKey)?.previewSrc || fallback;
+
+  return { get, set, clear, getHomeImage, buildPreviewSrc };
+})();
+
 (() => {
   const pets = [
     {
@@ -5121,7 +5167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const diaryLink = card.querySelector("[data-pet-diary-link]");
 
     if (img) {
-      img.src = pet.image;
+      img.src = window.PetDecoStore.getHomeImage(pet.key, pet.image);
       img.alt = pet.imageAlt;
       img.style.height = pet.imageHeight;
     }
@@ -5149,6 +5195,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderPetCard();
+
+  window.addEventListener("petdeco:saved", renderPetCard);
+  window.addEventListener("petdeco:cleared", renderPetCard);
+  window.addEventListener("hashchange", () => {
+    if (location.hash === "#screen-home") renderPetCard();
+  });
 
   card.querySelector("[data-pet-change]")?.addEventListener("click", (event) => {
     event.preventDefault();
@@ -5221,6 +5273,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.classList.toggle("is-active", el.dataset.petTab === key);
     });
     syncPetDecoCatalog(key);
+    applySavedDecoForPet(key);
     schedulePetTabIndicator();
     updatePetDecoPreview();
   };
@@ -5241,6 +5294,36 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const getActivePetKey = () => petTabs?.querySelector("[data-pet-tab].is-active")?.dataset.petTab || "cat";
+
+  const applySavedDecoForPet = (petKey) => {
+    const saved = window.PetDecoStore?.get(petKey);
+    if (!saved) return false;
+
+    const applyGroup = (groupKey, idx, idxAttr) => {
+      const group = screen.querySelector(`[data-pet-custom-group="${groupKey}"]`);
+      if (!group) return;
+      group.querySelectorAll(".pet-custom-item").forEach((item) => {
+        if (groupKey === "fur") {
+          if (item.dataset.petFor !== petKey) return;
+        } else if (item.classList.contains("is-pet-hidden")) {
+          return;
+        }
+        const itemIdx = item.hasAttribute("data-pet-custom-none")
+          ? 0
+          : parseInt(item.dataset[idxAttr] || item.dataset.previewIdx || "0", 10) || 0;
+        item.classList.toggle("is-active", itemIdx === idx);
+      });
+    };
+
+    applyGroup("fur", saved.p, "previewPetIdx");
+    applyGroup("hat", saved.h, "previewIdx");
+    applyGroup("cloth", saved.c, "previewIdx");
+    return true;
+  };
+
+  const restoreAllSavedDeco = () => {
+    ["pig", "duck", "cat"].forEach((key) => applySavedDecoForPet(key));
+  };
 
   const getActiveDecoTab = () =>
     switcherBtns.find((btn) => btn.classList.contains("is-active"))?.dataset.petDecoTab || "hat";
@@ -5888,7 +5971,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   screen.querySelector("[data-pet-deco-save]")?.addEventListener("click", () => {
+    const petKey = getActivePetKey();
+    const p = getActivePreviewIdx("fur", "previewPetIdx");
+    const h = getActivePreviewIdx("hat");
+    const c = getActivePreviewIdx("cloth");
+    const previewSrc =
+      previewImage?.dataset.previewKey
+      || previewImage?.src
+      || window.PetDecoStore.buildPreviewSrc(petKey, p, h, c);
+    window.PetDecoStore.set(petKey, { p, h, c, previewSrc });
     showSaveToast();
+    showPetReaction(petActionMessages.save[petKey]);
   });
 
   screen.querySelector("[data-pet-deco-camera]")?.addEventListener("click", () => {
@@ -5900,6 +5993,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   screen.querySelector("[data-pet-custom-reset]")?.addEventListener("click", () => {
+    window.PetDecoStore.clear(getActivePetKey());
     screen.querySelectorAll("[data-pet-custom-group]").forEach((group) => {
       const visible = Array.from(group.querySelectorAll(".pet-custom-item:not(.is-pet-hidden)"));
       visible.forEach((item, idx) => item.classList.toggle("is-active", idx === 0));
@@ -5916,6 +6010,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setActivePanel("hat", false);
   schedulePetTabIndicator(true);
   syncPetDecoCatalog(getActivePetKey());
+  restoreAllSavedDeco();
   updatePetDecoPreview();
   window.addEventListener("resize", () => schedulePetTabIndicator(true));
 });

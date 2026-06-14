@@ -218,6 +218,20 @@ body{
   display:block;
   margin:0 auto;
 }
+.home-main-pig.is-deco-saved{
+  width:auto;
+  max-width:min(64%, 156px);
+  height:auto!important;
+  max-height:118px;
+}
+.home-pet-card[data-pet-active="duck"] .home-main-pig.is-deco-saved{
+  max-width:min(68%, 164px);
+  max-height:124px;
+}
+.home-pet-card[data-pet-active="cat"] .home-main-pig.is-deco-saved{
+  max-width:min(66%, 160px);
+  max-height:120px;
+}
 #screen-home-duck .home-main-pig{
   height:220px;
 }
@@ -5167,9 +5181,15 @@ window.PetDecoStore = (() => {
     const diaryLink = card.querySelector("[data-pet-diary-link]");
 
     if (img) {
+      const hasSavedDeco = !!window.PetDecoStore.get(pet.key);
       img.src = window.PetDecoStore.getHomeImage(pet.key, pet.image);
       img.alt = pet.imageAlt;
-      img.style.height = pet.imageHeight;
+      img.classList.toggle("is-deco-saved", hasSavedDeco);
+      if (hasSavedDeco) {
+        img.style.removeProperty("height");
+      } else {
+        img.style.height = pet.imageHeight;
+      }
     }
     if (name) name.textContent = pet.name;
     if (mood) mood.textContent = pet.mood;

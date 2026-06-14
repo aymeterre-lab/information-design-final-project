@@ -949,6 +949,37 @@ body{
   margin-left:auto;
 }
 .group-chat-item.you{align-items:flex-start}
+.group-chat-item.is-intro-pending{display:none}
+.group-chat-item.is-intro-reveal{
+  animation:group-chat-intro-in .46s cubic-bezier(.22,.82,.24,1) both;
+}
+.group-chat-item.is-intro-reveal .group-chat-meta{
+  opacity:0;
+  transform:translateY(4px);
+}
+.group-chat-item.is-intro-reveal.is-intro-meta-show .group-chat-meta{
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .32s ease, transform .32s ease;
+}
+.group-chat-text.is-intro-typing::after{
+  content:"";
+  display:inline-block;
+  width:2px;
+  height:1em;
+  margin-left:1px;
+  vertical-align:-2px;
+  background:#88b2ff;
+  animation:group-chat-cursor .9s step-end infinite;
+}
+@keyframes group-chat-intro-in{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes group-chat-cursor{
+  0%,100%{opacity:1}
+  50%{opacity:0}
+}
 .group-chat-bubble{
   max-width:100%;
   border-radius:18px 18px 18px 8px;
@@ -4915,6 +4946,125 @@ document.addEventListener("DOMContentLoaded", () => {
   const formatChatTime = () =>
     new Date().toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit", hour12: true });
 
+  const INTRO_CHAR_DELAY = 58;
+  const INTRO_MESSAGE_GAP = 920;
+  const INTRO_START_DELAY = 480;
+
+  const introMessages = Array.from(list.querySelectorAll(".group-chat-item.you")).map((item) => {
+    const textEl = item.querySelector(".group-chat-text");
+    const fullText = textEl?.textContent || "";
+    return { item, textEl, fullText };
+  });
+
+  let introTimers = [];
+  let introToken = 0;
+  let chatIntroActive = false;
+
+  const scheduleIntro = (fn, delay) => {
+    const id = window.setTimeout(fn, delay);
+    introTimers.push(id);
+    return id;
+  };
+
+  const cancelChatIntro = () => {
+    introToken += 1;
+    introTimers.forEach(window.clearTimeout);
+    introTimers = [];
+    chatIntroActive = false;
+    list.classList.remove("is-intro-playing");
+  };
+
+  const restoreIntroMessages = () => {
+    introMessages.forEach(({ item, textEl, fullText }) => {
+      item.classList.remove("is-intro-pending", "is-intro-reveal", "is-intro-meta-show");
+      item.style.removeProperty("display");
+      if (textEl) {
+        textEl.textContent = fullText;
+        textEl.classList.remove("is-intro-typing");
+      }
+    });
+  };
+
+  const typeIntroText = (textEl, fullText, token, onDone) => {
+    const chars = [...fullText];
+    let idx = 0;
+    textEl.textContent = "";
+    textEl.classList.add("is-intro-typing");
+
+    const step = () => {
+      if (token !== introToken) return;
+      if (idx >= chars.length) {
+        textEl.classList.remove("is-intro-typing");
+        onDone();
+        return;
+      }
+      textEl.textContent += chars[idx];
+      idx += 1;
+      list.scrollTop = list.scrollHeight;
+      scheduleIntro(step, INTRO_CHAR_DELAY);
+    };
+
+    step();
+  };
+
+  const playChatIntro = () => {
+    if (!introMessages.length) return;
+
+    cancelChatIntro();
+    chatIntroActive = true;
+    list.classList.add("is-intro-playing");
+    const token = introToken;
+
+    introMessages.forEach(({ item, textEl }) => {
+      item.classList.add("is-intro-pending");
+      item.classList.remove("is-intro-reveal", "is-intro-meta-show");
+      if (textEl) {
+        textEl.textContent = "";
+        textEl.classList.remove("is-intro-typing");
+      }
+    });
+    list.scrollTop = 0;
+
+    const revealMessage = (index) => {
+      if (token !== introToken) return;
+      if (index >= introMessages.length) {
+        chatIntroActive = false;
+        list.classList.remove("is-intro-playing");
+        return;
+      }
+
+      const { item, textEl, fullText } = introMessages[index];
+      item.classList.remove("is-intro-pending");
+      item.classList.add("is-intro-reveal");
+      list.scrollTop = list.scrollHeight;
+
+      scheduleIntro(() => {
+        if (token !== introToken || !textEl) return;
+        typeIntroText(textEl, fullText, token, () => {
+          item.classList.add("is-intro-meta-show");
+          list.scrollTop = list.scrollHeight;
+          scheduleIntro(() => revealMessage(index + 1), INTRO_MESSAGE_GAP);
+        });
+      }, 120);
+    };
+
+    scheduleIntro(() => revealMessage(0), INTRO_START_DELAY);
+  };
+
+  let onChatScreen = location.hash === "#screen-group-chat";
+
+  window.addEventListener("app:screen", (event) => {
+    const screenId = event.detail?.screenId || "";
+    const enteringChat = screenId === "screen-group-chat";
+    if (enteringChat && !onChatScreen) {
+      playChatIntro();
+    } else if (!enteringChat && onChatScreen) {
+      cancelChatIntro();
+      restoreIntroMessages();
+    }
+    onChatScreen = enteringChat;
+  });
+
   let chatComposing = false;
   let lastSentText = "";
   let lastSentAt = 0;
@@ -7133,6 +7283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!matched) {
       document.getElementById(DEFAULT_SCREEN)?.classList.add("is-active-screen");
     }
+    window.dispatchEvent(new CustomEvent("app:screen", { detail: { screenId: id } }));
   };
 
   const navigate = () => {

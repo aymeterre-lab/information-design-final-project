@@ -222,7 +222,7 @@ body{
 }
 .home-pet-visual{
   --home-pet-w:100%;
-  --home-pet-h:128px;
+  --home-pet-h:180px;
   width:var(--home-pet-w);
   height:var(--home-pet-h);
   margin:0 auto;
@@ -231,26 +231,13 @@ body{
   justify-content:center;
   flex-shrink:0;
 }
-#screen-home .home-pet-card[data-pet-active="pig"] .home-pet-visual{
-  --home-pet-h:126px;
-}
-#screen-home .home-pet-card[data-pet-active="pig"] .home-pet-visual.is-deco-saved{
-  --home-pet-w:104px;
-  --home-pet-h:78px;
-}
-#screen-home .home-pet-card[data-pet-active="duck"] .home-pet-visual{
-  --home-pet-h:118px;
-}
-#screen-home .home-pet-card[data-pet-active="duck"] .home-pet-visual.is-deco-saved{
-  --home-pet-w:68px;
-  --home-pet-h:80px;
-}
+#screen-home .home-pet-card[data-pet-active="pig"] .home-pet-visual,
+#screen-home .home-pet-card[data-pet-active="duck"] .home-pet-visual,
 #screen-home .home-pet-card[data-pet-active="cat"] .home-pet-visual{
-  --home-pet-h:116px;
+  --home-pet-h:180px;
 }
-#screen-home .home-pet-card[data-pet-active="cat"] .home-pet-visual.is-deco-saved{
-  --home-pet-w:74px;
-  --home-pet-h:76px;
+.home-pet-visual.is-deco-saved .home-main-pig{
+  object-position:center bottom;
 }
 #screen-home-duck .home-main-pig{
   height:220px;
@@ -5204,18 +5191,20 @@ window.PetDecoStore = (() => {
 })();
 
 (() => {
+  const HOME_PET_BASELINE = { w: "100%", h: "180px" };
+
   const petVisualSizes = {
     pig: {
-      default: { w: "100%", h: "126px" },
-      deco: { w: "104px", h: "78px" },
+      default: HOME_PET_BASELINE,
+      deco: HOME_PET_BASELINE,
     },
     duck: {
-      default: { w: "100%", h: "118px" },
-      deco: { w: "68px", h: "80px" },
+      default: HOME_PET_BASELINE,
+      deco: HOME_PET_BASELINE,
     },
     cat: {
-      default: { w: "100%", h: "116px" },
-      deco: { w: "74px", h: "76px" },
+      default: HOME_PET_BASELINE,
+      deco: HOME_PET_BASELINE,
     },
   };
 
@@ -5226,7 +5215,7 @@ window.PetDecoStore = (() => {
       thumb: "./돼지_이모지_행복.png",
       image: "./돼지_홈.png",
       imageAlt: "오잉이",
-      imageHeight: "126px",
+      imageHeight: "180px",
       mood: "오늘도 잘하고 있어요!",
       greeting: "주연님,<br>오늘도 지갑 방어전 가보자! 😎",
       diary: "#screen-diary",
@@ -5238,7 +5227,7 @@ window.PetDecoStore = (() => {
       thumb: "./오리_이모지_행복.png",
       image: "./오리_홈.png",
       imageAlt: "꽥꽥이",
-      imageHeight: "118px",
+      imageHeight: "180px",
       mood: "느긋하게 가셔도 괜찮아요, 꽥!",
       greeting: "주연님,<br>오늘도 무리하지 않으셔도 돼요 꽥~",
       diary: "#screen-diary-duck",
@@ -5250,7 +5239,7 @@ window.PetDecoStore = (() => {
       thumb: "./야옹이_이모지_행복.png",
       image: "./고양이_홈.png",
       imageAlt: "칼시코",
-      imageHeight: "116px",
+      imageHeight: "180px",
       mood: "뭐, 나쁘지 않네.",
       greeting: "주연님,<br>오늘도 버티세요.",
       diary: "#screen-diary-cat",

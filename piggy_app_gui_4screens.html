@@ -212,31 +212,38 @@ body{
 }
 .home-main-pig{
   width:100%;
-  height:100%;
-  max-width:100%;
-  max-height:100%;
+  height:180px;
   object-fit:contain;
-  object-position:center bottom;
+  object-position:center;
   display:block;
   margin:0 auto;
 }
 .home-pet-visual{
+  width:100%;
+  margin:0 auto;
+  flex-shrink:0;
+}
+#screen-home .home-pet-card[data-pet-active="duck"] .home-pet-visual:not(.is-deco-saved) .home-main-pig{
+  height:240px;
+}
+#screen-home .home-pet-card[data-pet-active="cat"] .home-pet-visual:not(.is-deco-saved) .home-main-pig{
+  height:200px;
+}
+.home-pet-visual.is-deco-saved{
   --home-pet-w:100%;
   --home-pet-h:180px;
   width:var(--home-pet-w);
   height:var(--home-pet-h);
-  margin:0 auto;
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  flex-shrink:0;
-}
-#screen-home .home-pet-card[data-pet-active="pig"] .home-pet-visual,
-#screen-home .home-pet-card[data-pet-active="duck"] .home-pet-visual,
-#screen-home .home-pet-card[data-pet-active="cat"] .home-pet-visual{
-  --home-pet-h:180px;
 }
 .home-pet-visual.is-deco-saved .home-main-pig{
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
   object-position:center bottom;
 }
 #screen-home-duck .home-main-pig{
@@ -5191,23 +5198,6 @@ window.PetDecoStore = (() => {
 })();
 
 (() => {
-  const HOME_PET_BASELINE = { w: "100%", h: "180px" };
-
-  const petVisualSizes = {
-    pig: {
-      default: HOME_PET_BASELINE,
-      deco: HOME_PET_BASELINE,
-    },
-    duck: {
-      default: HOME_PET_BASELINE,
-      deco: HOME_PET_BASELINE,
-    },
-    cat: {
-      default: HOME_PET_BASELINE,
-      deco: HOME_PET_BASELINE,
-    },
-  };
-
   const pets = [
     {
       key: "pig",
@@ -5227,7 +5217,7 @@ window.PetDecoStore = (() => {
       thumb: "./오리_이모지_행복.png",
       image: "./오리_홈.png",
       imageAlt: "꽥꽥이",
-      imageHeight: "180px",
+      imageHeight: "240px",
       mood: "느긋하게 가셔도 괜찮아요, 꽥!",
       greeting: "주연님,<br>오늘도 무리하지 않으셔도 돼요 꽥~",
       diary: "#screen-diary-duck",
@@ -5239,7 +5229,7 @@ window.PetDecoStore = (() => {
       thumb: "./야옹이_이모지_행복.png",
       image: "./고양이_홈.png",
       imageAlt: "칼시코",
-      imageHeight: "180px",
+      imageHeight: "200px",
       mood: "뭐, 나쁘지 않네.",
       greeting: "주연님,<br>오늘도 버티세요.",
       diary: "#screen-diary-cat",
@@ -5303,12 +5293,8 @@ window.PetDecoStore = (() => {
     const greeting = screen.querySelector("[data-pet-greeting]");
     const diaryLink = card.querySelector("[data-pet-diary-link]");
     const hasSavedDeco = !!window.PetDecoStore.get(pet.key);
-    const sizes = petVisualSizes[pet.key] || petVisualSizes.pig;
-    const visualSize = hasSavedDeco ? sizes.deco : sizes.default;
 
     if (visual) {
-      visual.style.setProperty("--home-pet-w", visualSize.w);
-      visual.style.setProperty("--home-pet-h", visualSize.h);
       visual.classList.toggle("is-deco-saved", hasSavedDeco);
     }
 
@@ -5316,8 +5302,13 @@ window.PetDecoStore = (() => {
       img.src = window.PetDecoStore.getHomeImage(pet.key, pet.image);
       img.alt = pet.imageAlt;
       img.classList.toggle("is-deco-saved", hasSavedDeco);
-      img.style.removeProperty("height");
-      img.style.removeProperty("width");
+      if (hasSavedDeco) {
+        img.style.removeProperty("height");
+        img.style.removeProperty("width");
+      } else {
+        img.style.width = "100%";
+        img.style.height = pet.imageHeight;
+      }
     }
     if (name) name.textContent = pet.name;
     if (mood) mood.textContent = pet.mood;

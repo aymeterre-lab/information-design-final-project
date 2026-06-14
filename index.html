@@ -2446,12 +2446,35 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
+  animation:
+    splash-logo-enter 1s cubic-bezier(.22,.82,.24,1) both,
+    splash-logo-idle 4.2s ease-in-out 1s infinite;
 }
 .splash-icon{
   width:100%;
   height:auto;
   object-fit:contain;
   display:block;
+}
+@keyframes splash-logo-enter{
+  from{
+    opacity:0;
+    transform:translateY(10px) scale(.94);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+@keyframes splash-logo-idle{
+  0%,100%{
+    transform:translateY(0) scale(1);
+    filter:drop-shadow(0 4px 14px rgba(233,151,184,.1));
+  }
+  50%{
+    transform:translateY(-5px) scale(1.025);
+    filter:drop-shadow(0 8px 22px rgba(233,151,184,.22));
+  }
 }
 
 /* ── ONBOARDING ── */
